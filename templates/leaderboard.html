@@ -131,66 +131,72 @@
     <script>
         const shareLink = "{{ share_link }}";
         const creatorName = "{{ creator }}";
+        
+        // --- 🔥 SHARE FUNCTIONS ---
+
+        function shareToWhatsApp() {
+            // ලස්සන Message එකක් හදමු
+            const text = `Do you know ${creatorName}? ❤️\n\nමම ගැන හරියටම දන්නේ කවුද බලමු? මේ Link එකෙන් ඇවිත් Quiz එක කරන්න! 👇\n\n${shareLink}`;
+            const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        }
+
+        function copyLink() {
+            const copyText = document.getElementById("myLink");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); 
+            navigator.clipboard.writeText(copyText.value);
+            alert("Link Copied! යාලුවන්ට යවන්න. 🚀");
+        }
+
+        async function nativeShare() {
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Valentine Quiz ❤️',
+                        text: `Do you know ${creatorName}? Test it here!`,
+                        url: shareLink
+                    });
+                } catch (err) {
+                    console.log('Error sharing:', err);
+                }
+            } else {
+                alert('Sharing not supported on this browser. Use Copy Link.');
+            }
+        }
+
+        // --- CHAT FUNCTIONS (Same as before) ---
         let currentRoom = "";
         let intervalId = null;
-
-        // --- Share Functions (පරණ විදියටම තියන්න) ---
-        function shareToWhatsApp() {
-            const text = `Do you know ${creatorName}? ❤️\nTry this Quiz: ${shareLink}`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-        }
-        function copyLink() {
-            navigator.clipboard.writeText(shareLink);
-            alert("Link Copied!");
-        }
-        async function nativeShare() {
-            if (navigator.share) await navigator.share({title: 'Quiz', url: shareLink});
-        }
-
-        // --- CHAT FUNCTIONS (UPDATED) ---
 
         function openChat(roomId, playerName) {
             document.getElementById("chatModal").style.display = "block";
             document.getElementById("chatTitle").innerText = "Chat with " + playerName;
             currentRoom = roomId;
-            
-            loadMessages(); // මුලින්ම ලෝඩ් කරන්න
-            
-            // පරණ interval එකක් තියෙනවා නම් අයින් කරන්න
-            if (intervalId) clearInterval(intervalId);
-            
-            // අලුත් interval එක පටන් ගන්න (තත්පර 3න් 3ට)
-            intervalId = setInterval(loadMessages, 3000);
+            loadMessages();
+            intervalId = setInterval(loadMessages, 2000);
         }
 
         function closeChat() {
             document.getElementById("chatModal").style.display = "none";
-            // Chat එක වැහුවම අනවශ්‍ය විදියට refresh වෙන එක නවත්තන්න
-            if (intervalId) clearInterval(intervalId);
+            clearInterval(intervalId);
         }
 
         function loadMessages() {
             if (!currentRoom) return;
-            
-            // Cache ප්‍රශ්නය විසඳන්න Timestamp එකක්
-            const timestamp = new Date().getTime();
-
-            fetch(`/get_chat/${currentRoom}?t=${timestamp}`)
+            fetch(`/get_chat/${currentRoom}`)
                 .then(res => res.json())
                 .then(data => {
                     const box = document.getElementById("chatWindow");
-                    
-                    // අලුත් මැසේජ් තියෙනවා නම් විතරක් update කරන්න
-                    if (box.childElementCount !== data.length) {
-                        box.innerHTML = "";
-                        data.forEach(m => {
-                            const div = document.createElement("div");
-                            div.className = "msg " + (m.sender === creatorName ? "me" : "them");
-                            div.innerHTML = `<b>${m.sender}:</b> ${m.msg}`;
-                            box.appendChild(div);
-                        });
-                        box.scrollTop = box.scrollHeight;
-                    }
+                    box.innerHTML = "";
+                    data.forEach(m => {
+                        const div = document.createElement("div");
+                        div.className = "msg " + (m.sender === creatorName ? "me" : "them");
+                        div.innerHTML = `<b>${m.sender}:</b> ${m.msg}`;
+                        box.appendChild(div);
+                    });
+                    // Auto scroll to bottom
+                    box.scrollTop = box.scrollHeight;
                 });
         }
 

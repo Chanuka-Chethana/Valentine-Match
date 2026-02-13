@@ -54,28 +54,18 @@
         const myName = "{{ player }}";
 
         function loadChat() {
-            // ?t= timestamp එකක් දාන්නේ Browser එක පරණ data මතක තියාගන්න (Cache) එක නවත්තන්න
-            const timestamp = new Date().getTime();
-            
-            fetch(`/get_chat/${roomId}?t=${timestamp}`)
+            fetch(`/get_chat/${roomId}`)
                 .then(res => res.json())
                 .then(data => {
                     const box = document.getElementById("chatHistory");
-                    
-                    // මැසේජ් ගණන වෙනස් වෙලා නම් විතරක් Update කරන්න (Screen එක ගැහෙන්නෙ නැති වෙන්න)
-                    if (box.childElementCount !== data.length) {
-                        box.innerHTML = "";
-                        data.forEach(m => {
-                            const div = document.createElement("div");
-                            div.className = "msg " + (m.sender === myName ? "me" : "them");
-                            div.innerHTML = `<b>${m.sender}:</b> ${m.msg}`;
-                            box.appendChild(div);
-                        });
-                        // අලුත් මැසේජ් එකක් ආවම යටට Scroll වෙන්න
-                        box.scrollTop = box.scrollHeight;
-                    }
-                })
-                .catch(err => console.error("Chat Error:", err));
+                    box.innerHTML = "";
+                    data.forEach(m => {
+                        const div = document.createElement("div");
+                        div.className = "msg " + (m.sender === myName ? "me" : "them");
+                        div.innerHTML = `<b>${m.sender}:</b> ${m.msg}`;
+                        box.appendChild(div);
+                    });
+                });
         }
 
         function sendMsg() {
@@ -90,14 +80,11 @@
             fetch("/send_chat", { method: "POST", body: fd })
                 .then(() => {
                     document.getElementById("msgInput").value = "";
-                    loadChat(); // යැව්ව ගමන්ම update කරන්න
+                    loadChat();
                 });
         }
 
-        // සෑම තත්පර 3කට වරක්ම Chat එක අලුත් කරන්න
-        setInterval(loadChat, 3000);
-        
-        // පටන් ගද්දිම load කරන්න
+        setInterval(loadChat, 2000); // Poll every 2 seconds
         loadChat();
     </script>
 </body>
