@@ -4,6 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     
     <style>
         .chat-container { width: 100%; max-width: 400px; margin-top: 20px; text-align: left; }
@@ -14,7 +15,6 @@
         .input-area { display: flex; gap: 5px; }
         .input-area input { flex: 1; padding: 8px; border-radius: 5px; border: 1px solid #ddd; }
         
-        /* Locked Box Style */
         .locked-box {
             background: #ffebee;
             color: #c62828;
@@ -23,14 +23,42 @@
             border: 2px dashed #ffcdd2;
             margin-top: 20px;
         }
-        .winner-text {
-            color: #2e7d32;
-            font-weight: bold;
-            animation: bounce 1s infinite;
+
+        /* --- Certificate Styles --- */
+        .certificate-box {
+            background: linear-gradient(180deg, #ffffff 0%, #fff0f5 100%);
+            padding: 20px;
+            border-radius: 20px;
+            border: 4px solid #ff3366;
+            text-align: center;
+            margin: 0 auto 20px auto;
+            max-width: 320px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            position: relative;
         }
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
+        .avatar-circle img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid #ff3366;
+            background: white;
+            margin-bottom: 10px;
+        }
+        .title-text {
+            font-size: 24px;
+            font-weight: 900;
+            margin: 5px 0;
+            text-transform: uppercase;
+        }
+        .score-badge {
+            background: #ff3366;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: bold;
+            font-size: 16px;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -38,11 +66,33 @@
     <ul class="circles"><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li></ul>
     
     <div class="container center">
-        {% if score == 10 %}
-            <h1 class="winner-text">🎉 PERFECT 10/10! 🎉</h1>
-        {% else %}
-            <h1>Score: {{ score }} / 10</h1>
-        {% endif %}
+        
+        <div id="resultCard" class="certificate-box">
+            <div class="avatar-circle">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{ player }}&backgroundColor=ffdfbf" alt="avatar">
+            </div>
+            
+            <h3 style="margin:0; color:#555;">{{ player }}</h3>
+            <p style="margin:5px; font-size:12px; color:#888;">is officially certified as</p>
+            
+            {% if score == 10 %}
+                <h1 class="title-text" style="color:#d32f2f;">SOULMATE ❤️</h1>
+            {% elif score >= 7 %}
+                <h1 class="title-text" style="color:#e64a19;">BESTIE 👯</h1>
+            {% elif score >= 4 %}
+                <h1 class="title-text" style="color:#fbc02d;">JUST FRIEND 🙃</h1>
+            {% else %}
+                <h1 class="title-text" style="color:#5d4037;">STRANGER 👻</h1>
+            {% endif %}
+
+            <div class="score-badge">
+                Score: {{ score }} / 10
+            </div>
+            <p style="font-size:10px; margin-top:15px; color:#aaa;">Verified by {{ creator }} ✅</p>
+        </div>
+        <button onclick="downloadCard()" style="background:#333; width:auto; margin-bottom:20px;">
+            📸 Save to Gallery
+        </button>
 
         <h2>{{ msg }}</h2>
         
@@ -53,28 +103,22 @@
             </div>
         {% endif %}
 
-        <p>{{ player }} ❤️ {{ creator }}</p>
-
         {% if room_id %}
             <div class="chat-container">
                 <h3 style="color:#2e7d32;">✅ Chat Unlocked!</h3>
-                <p>ඔයා දිනුම්! දැන් {{ creator }} එක්ක Chat කරන්න පුළුවන්.</p>
-                
                 <div id="chatHistory" class="chat-box"></div>
                 <div class="input-area">
-                    <input type="text" id="msgInput" placeholder="Say Hi to your match...">
+                    <input type="text" id="msgInput" placeholder="Say Hi...">
                     <button onclick="sendMsg()" style="width: auto; margin:0; background:#2e7d32;">Send</button>
                 </div>
             </div>
 
             <script>
-                // ලස්සන මල් වෙඩි Animation එක
-                var duration = 5 * 1000;
+                // Confetti Logic
+                var duration = 3 * 1000;
                 var animationEnd = Date.now() + duration;
                 var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
                 function randomInRange(min, max) { return Math.random() * (max - min) + min; }
-
                 var interval = setInterval(function() {
                     var timeLeft = animationEnd - Date.now();
                     if (timeLeft <= 0) { return clearInterval(interval); }
@@ -83,20 +127,28 @@
                     confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
                 }, 250);
             </script>
-
         {% else %}
             <div class="locked-box">
                 <h3>🔒 Chat Locked</h3>
-                <p>Chat එක Unlock කරගන්න නම් ප්‍රශ්න 10ටම හරියට උත්තර දෙන්න ඕන!</p>
+                <p>Chat කරන්න නම් 10/10ක් ගන්නම ඕන!</p>
                 <p style="font-size:40px;">🚫💬</p>
                 <button onclick="window.location.href='/'" style="background:#ff3366;">Try Again</button>
             </div>
         {% endif %}
-
     </div>
 
-    {% if room_id %}
     <script>
+        function downloadCard() {
+            const card = document.getElementById("resultCard");
+            html2canvas(card, {scale: 2}).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'valentine-result.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+
+        {% if room_id %}
         const roomId = "{{ room_id }}";
         const myName = "{{ player }}";
 
@@ -118,7 +170,6 @@
                     }
                 });
         }
-
         function sendMsg() {
             const txt = document.getElementById("msgInput").value;
             if(!txt) return;
@@ -133,7 +184,7 @@
         }
         setInterval(loadChat, 3000);
         loadChat();
+        {% endif %}
     </script>
-    {% endif %}
 </body>
 </html>
