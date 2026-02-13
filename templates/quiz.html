@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Do you know {{ creator }}? ❤️</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        /* Timer එකේ Design එක */
+        #timer-box {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: #ff3366;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Music Player Design */
+        .music-control {
+            text-align: center;
+            margin-bottom: 20px;
+            background: #fff0f5;
+            padding: 10px;
+            border-radius: 15px;
+            border: 1px dashed #ff3366;
+        }
+    </style>
+</head>
+<body>
+    <ul class="circles">
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+    </ul>
+
+    <div id="timer-box">⏳ <span id="time">60</span>s</div>
+
+    <div class="container">
+        <h2>{{ creator }} ට කොච්චර ආදරේද? 😉</h2>
+        
+        <div class="music-control">
+            <p>🔈 සද්දෙ දාගෙනම කරමුද?</p>
+            <audio id="bgMusic" controls loop>
+                <source src="/static/song.mp3" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+            <script>
+                // Browser එකෙන් Auto-play block කරන නිසා, User click කරාම play වෙන්න හදමු
+                document.addEventListener('click', function() {
+                    var audio = document.getElementById("bgMusic");
+                    audio.play();
+                }, { once: true }); // එක පාරයි click කරන්න ඕන
+            </script>
+        </div>
+
+        <p>⚠️ තත්පර 60යි තියෙන්නේ! ඉක්මනට උත්තර දෙන්න.</p>
+        
+        <form id="quizForm" action="/submit/{{ quiz_id }}" method="post">
+            <input type="text" name="player_name" placeholder="ඔයාගේ නම" required>
+            
+            {% for item in questions %}
+            <div class="q-card">
+                <h3>{{ item.q }}</h3>
+                <div class="options">
+                    {% for opt in item.opts %}
+                    <label class="radio-label">
+                        <input type="radio" name="a{{ item.id }}" value="{{ opt }}" required>
+                        <span>{{ opt }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            
+            <button type="submit">Submit & Check ❤️</button>
+        </form>
+    </div>
+
+    <script>
+        var timeLeft = 60; // තත්පර 60 යි දෙන්නේ
+        var timerElement = document.getElementById('time');
+        var timerBox = document.getElementById('timer-box');
+        
+        var countdown = setInterval(function() {
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                alert("Time's Up! වෙලාව ඉවරයි සහෝ! අපි Auto Submit කරනවා. 🚀");
+                document.getElementById("quizForm").submit(); // Auto Submit
+            } else {
+                timerElement.innerHTML = timeLeft;
+                
+                // වෙලාව 10ට අඩු උනාම පාට වෙනස් කරනවා (Red Alert)
+                if (timeLeft < 10) {
+                    timerBox.style.backgroundColor = "red";
+                    timerBox.style.border = "2px solid yellow";
+                }
+            }
+            timeLeft -= 1;
+        }, 1000); // 1000ms = 1 second
+    </script>
+
+</body>
+</html>

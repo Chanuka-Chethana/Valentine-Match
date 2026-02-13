@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Valentine Match ❤️</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <ul class="circles">
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+    </ul>
+    <div class="container">
+        <h1>❤️ Valentine Quiz ❤️</h1>
+        <p>ඔයා ගැන ප්‍රශ්න 10ක්! හරි උත්තර Select කරන්න.</p>
+        
+        <form action="/create" method="post">
+            <input type="text" name="creator_name" placeholder="ඔයාගේ නම" required>
+            
+            {% for item in questions %}
+            <div class="q-card">
+                <h3>{{ item.q }}</h3>
+                <div class="options">
+                    {% for opt in item.opts %}
+                    <label class="radio-label">
+                        <input type="radio" name="a{{ item.id }}" value="{{ opt }}" required>
+                        <span>{{ opt }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            
+            <div class="secret-section">
+                <h3>🏆 Secret Prize Message</h3>
+                <p>ලකුණු 10/10 ගන්න අයට විතරක් පේන්න මැසේජ් එකක්:</p>
+                <input type="text" name="secret_msg" placeholder="Ex: Will you go out with me? 🌹" required>
+            </div>
+            
+            <button type="submit">Quiz එක හදන්න ❤️</button>
+        </form>
+    </div>
+</body>
+</html>

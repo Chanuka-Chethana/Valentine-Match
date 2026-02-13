@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .chat-container { width: 100%; max-width: 400px; margin-top: 20px; text-align: left; }
+        .chat-box { height: 250px; overflow-y: scroll; border: 1px solid #ddd; background: #fff; padding: 10px; border-radius: 10px; margin-bottom: 10px;}
+        .msg { padding: 5px 10px; margin: 5px 0; border-radius: 10px; font-size: 14px; width: fit-content; max-width: 80%; }
+        .me { background: #d1c4e9; margin-left: auto; text-align: right; }
+        .them { background: #ffe0b2; margin-right: auto; }
+        .input-area { display: flex; gap: 5px; }
+        .input-area input { flex: 1; padding: 8px; border-radius: 5px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <ul class="circles">
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+    </ul>
+    <div class="container center">
+        <h1>Score: {{ score }} / 10</h1>
+        <h2>{{ msg }}</h2>
+        
+        {% if secret_msg %}
+            <div style="background:gold; padding:10px; border-radius:10px; margin:10px;">
+                <h3>🎉 Secret Unlocked:</h3>
+                <p>{{ secret_msg }}</p>
+            </div>
+        {% endif %}
+
+        <p>{{ player }} ❤️ {{ creator }}</p>
+
+        <div class="chat-container">
+            <h3>💬 Chat with {{ creator }}</h3>
+            <div id="chatHistory" class="chat-box"></div>
+            <div class="input-area">
+                <input type="text" id="msgInput" placeholder="Say Hi...">
+                <button onclick="sendMsg()" style="width: auto; margin:0;">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const roomId = "{{ room_id }}";
+        const myName = "{{ player }}";
+
+        function loadChat() {
+            fetch(`/get_chat/${roomId}`)
+                .then(res => res.json())
+                .then(data => {
+                    const box = document.getElementById("chatHistory");
+                    box.innerHTML = "";
+                    data.forEach(m => {
+                        const div = document.createElement("div");
+                        div.className = "msg " + (m.sender === myName ? "me" : "them");
+                        div.innerHTML = `<b>${m.sender}:</b> ${m.msg}`;
+                        box.appendChild(div);
+                    });
+                });
+        }
+
+        function sendMsg() {
+            const txt = document.getElementById("msgInput").value;
+            if(!txt) return;
+            
+            const fd = new FormData();
+            fd.append("room_id", roomId);
+            fd.append("sender", myName);
+            fd.append("msg", txt);
+
+            fetch("/send_chat", { method: "POST", body: fd })
+                .then(() => {
+                    document.getElementById("msgInput").value = "";
+                    loadChat();
+                });
+        }
+
+        setInterval(loadChat, 2000); // Poll every 2 seconds
+        loadChat();
+    </script>
+</body>
+</html>
