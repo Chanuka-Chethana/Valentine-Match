@@ -100,6 +100,8 @@ def take_quiz(request: Request, quiz_id: str):
         })
     return "Link Expired or Invalid!"
 
+# main.py එකේ submit_quiz function එක හොයාගෙන මේක paste කරන්න
+
 @app.post("/submit/{quiz_id}")
 def submit_quiz(request: Request, quiz_id: str, player_name: str = Form(...), 
                 a1: str = Form(...), a2: str = Form(...), a3: str = Form(...), a4: str = Form(...), a5: str = Form(...),
@@ -120,22 +122,30 @@ def submit_quiz(request: Request, quiz_id: str, player_name: str = Form(...),
             
     c.execute("INSERT INTO results VALUES (?, ?, ?)", (quiz_id, player_name, score))
     conn.commit()
-    send_telegram_msg(f"💘 New Match!\n{player_name}: {score}/10")
     
-    msg = "අපි යාළුවො විතරයි! 😅"
-    if score > 5: msg = "ම්ම්... සෑහෙන්න ගැලපෙනවා! 😉"
-    if score > 9: msg = "අඩෝ No way! Perfect Match එක! ❤️💍"
+    # Telegram Msg
+    send_telegram_msg(f"💘 New Match ({player_name}): {score}/10")
+    
+    # --- LOGIC වෙනස් කළා ---
+    room_id = None
+    secret = None
+    msg = ""
 
-    secret = quiz[12] if score >= 9 else None
+    if score == 10:
+        msg = "WOW! PERFECT MATCH! 💍❤️"
+        secret = quiz[12] # Secret Message එක පේන්නේ 10/10 නම් විතරයි
+        room_id = f"{quiz_id}_{player_name}" # Chat Room එක හැදෙන්නේ 10/10 නම් විතරයි
+    elif score >= 7:
+        msg = "ළඟටම ආවා! ඒත් Chat එක Lock! 🔐"
+    else:
+        msg = "අපි යාළුවො විතරයි! Chat Locked 🔒"
+
     conn.close()
-
-    # ### NEW: Chat Room ID එක හදලා Template එකට යවනවා
-    room_id = f"{quiz_id}_{player_name}"
 
     return templates.TemplateResponse("result.html", {
         "request": request, "score": score, "player": player_name, 
         "msg": msg, "creator": quiz[1], "secret_msg": secret,
-        "room_id": room_id  # <--- මෙයාව යැව්වා
+        "room_id": room_id  # <--- 10ක් ගත්තොත් විතරයි මේක යන්නේ. නැත්නම් None.
     })
 
 @app.get("/leaderboard/{quiz_id}")
