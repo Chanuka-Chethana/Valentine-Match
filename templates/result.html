@@ -3,6 +3,8 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
     <style>
         .chat-container { width: 100%; max-width: 400px; margin-top: 20px; text-align: left; }
         .chat-box { height: 250px; overflow-y: scroll; border: 1px solid #ddd; background: #fff; padding: 10px; border-radius: 10px; margin-bottom: 10px;}
@@ -11,81 +13,127 @@
         .them { background: #ffe0b2; margin-right: auto; }
         .input-area { display: flex; gap: 5px; }
         .input-area input { flex: 1; padding: 8px; border-radius: 5px; border: 1px solid #ddd; }
+        
+        /* Locked Box Style */
+        .locked-box {
+            background: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px dashed #ffcdd2;
+            margin-top: 20px;
+        }
+        .winner-text {
+            color: #2e7d32;
+            font-weight: bold;
+            animation: bounce 1s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
     </style>
 </head>
 <body>
-    <ul class="circles">
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-    </ul>
+    <ul class="circles"><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li></ul>
+    
     <div class="container center">
-        <h1>Score: {{ score }} / 10</h1>
+        {% if score == 10 %}
+            <h1 class="winner-text">🎉 PERFECT 10/10! 🎉</h1>
+        {% else %}
+            <h1>Score: {{ score }} / 10</h1>
+        {% endif %}
+
         <h2>{{ msg }}</h2>
         
         {% if secret_msg %}
-            <div style="background:gold; padding:10px; border-radius:10px; margin:10px;">
-                <h3>🎉 Secret Unlocked:</h3>
-                <p>{{ secret_msg }}</p>
+            <div style="background:gold; padding:15px; border-radius:10px; margin:10px; border:2px solid orange;">
+                <h3>💌 Secret Message:</h3>
+                <p style="font-size:18px; font-weight:bold;">{{ secret_msg }}</p>
             </div>
         {% endif %}
 
         <p>{{ player }} ❤️ {{ creator }}</p>
 
-        <div class="chat-container">
-            <h3>💬 Chat with {{ creator }}</h3>
-            <div id="chatHistory" class="chat-box"></div>
-            <div class="input-area">
-                <input type="text" id="msgInput" placeholder="Say Hi...">
-                <button onclick="sendMsg()" style="width: auto; margin:0;">Send</button>
+        {% if room_id %}
+            <div class="chat-container">
+                <h3 style="color:#2e7d32;">✅ Chat Unlocked!</h3>
+                <p>ඔයා දිනුම්! දැන් {{ creator }} එක්ක Chat කරන්න පුළුවන්.</p>
+                
+                <div id="chatHistory" class="chat-box"></div>
+                <div class="input-area">
+                    <input type="text" id="msgInput" placeholder="Say Hi to your match...">
+                    <button onclick="sendMsg()" style="width: auto; margin:0; background:#2e7d32;">Send</button>
+                </div>
             </div>
-        </div>
+
+            <script>
+                // ලස්සන මල් වෙඩි Animation එක
+                var duration = 5 * 1000;
+                var animationEnd = Date.now() + duration;
+                var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+                function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+
+                var interval = setInterval(function() {
+                    var timeLeft = animationEnd - Date.now();
+                    if (timeLeft <= 0) { return clearInterval(interval); }
+                    var particleCount = 50 * (timeLeft / duration);
+                    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+                }, 250);
+            </script>
+
+        {% else %}
+            <div class="locked-box">
+                <h3>🔒 Chat Locked</h3>
+                <p>Chat එක Unlock කරගන්න නම් ප්‍රශ්න 10ටම හරියට උත්තර දෙන්න ඕන!</p>
+                <p style="font-size:40px;">🚫💬</p>
+                <button onclick="window.location.href='/'" style="background:#ff3366;">Try Again</button>
+            </div>
+        {% endif %}
+
     </div>
 
+    {% if room_id %}
     <script>
         const roomId = "{{ room_id }}";
         const myName = "{{ player }}";
 
         function loadChat() {
-            fetch(`/get_chat/${roomId}`)
+            const timestamp = new Date().getTime();
+            fetch(`/get_chat/${roomId}?t=${timestamp}`)
                 .then(res => res.json())
                 .then(data => {
                     const box = document.getElementById("chatHistory");
-                    box.innerHTML = "";
-                    data.forEach(m => {
-                        const div = document.createElement("div");
-                        div.className = "msg " + (m.sender === myName ? "me" : "them");
-                        div.innerHTML = `<b>${m.sender}:</b> ${m.msg}`;
-                        box.appendChild(div);
-                    });
+                    if (box.childElementCount !== data.length) {
+                        box.innerHTML = "";
+                        data.forEach(m => {
+                            const div = document.createElement("div");
+                            div.className = "msg " + (m.sender === myName ? "me" : "them");
+                            div.innerHTML = `<b>${m.sender}:</b> ${m.msg}`;
+                            box.appendChild(div);
+                        });
+                        box.scrollTop = box.scrollHeight;
+                    }
                 });
         }
 
         function sendMsg() {
             const txt = document.getElementById("msgInput").value;
             if(!txt) return;
-            
             const fd = new FormData();
             fd.append("room_id", roomId);
             fd.append("sender", myName);
             fd.append("msg", txt);
-
-            fetch("/send_chat", { method: "POST", body: fd })
-                .then(() => {
-                    document.getElementById("msgInput").value = "";
-                    loadChat();
-                });
+            fetch("/send_chat", { method: "POST", body: fd }).then(() => {
+                document.getElementById("msgInput").value = "";
+                loadChat();
+            });
         }
-
-        setInterval(loadChat, 2000); // Poll every 2 seconds
+        setInterval(loadChat, 3000);
         loadChat();
     </script>
+    {% endif %}
 </body>
 </html>
