@@ -1,13 +1,3 @@
----
-title: Valentine Match
-emoji: 🐠
-colorFrom: pink
-colorTo: green
-sdk: docker
-pinned: false
-license: openrail
----
-
 Project is already hosted in huggingface. Just click - https://chanuuddwad-valentine-match.hf.space
 If you want to run localy,
 
